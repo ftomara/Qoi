@@ -1,8 +1,10 @@
+mod constants;
 mod decoder;
 mod encoder;
 mod pixel;
 use decoder::Decoder;
-use encoder::{Encoder, Pixel, QoiHeader, QOI_EOF};
+use constants::QOI_EOF;
+use encoder::{Encoder, Pixel, QoiHeader};
 use image::{self, ColorType};
 use std::env;
 fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {

@@ -1,7 +1,8 @@
+use crate::constants::{
+    QOI_INDEX_SIZE, QOI_MAGIC, QOI_MAX_RUN, QOI_OP_DIFF, QOI_OP_LUMA, QOI_OP_RGB, QOI_OP_RGBA,
+    QOI_OP_RUN,
+};
 pub use crate::pixel::Pixel;
-
-const QOI_MAGIC: [u8; 4] = *b"qoif";
-pub const QOI_EOF: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 1];
 pub struct QoiHeader {
     magic: [u8; 4],
     width: u32,
@@ -34,7 +35,7 @@ impl QoiHeader {
 
 pub struct Encoder {
     prev_pixel: Pixel,
-    prev_seen_list: [Pixel; 64],
+    prev_seen_list: [Pixel; QOI_INDEX_SIZE],
     is_run: bool,
     chunks: Vec<u8>,
     is_rgb: bool,
@@ -44,7 +45,7 @@ impl Encoder {
     pub fn new(is_rgb: bool) -> Self {
         Encoder {
             prev_pixel: Pixel(0, 0, 0, 255),
-            prev_seen_list: [Pixel(0, 0, 0, 0); 64],
+            prev_seen_list: [Pixel(0, 0, 0, 0); QOI_INDEX_SIZE],
             is_run: false,
             chunks: Vec::new(),
             is_rgb,
@@ -60,14 +61,14 @@ impl Encoder {
                 Some(ch) => ch,
                 None => panic!(),
             };
-            if *last_chunck < 253 {
+            if *last_chunck < QOI_OP_RUN | (QOI_MAX_RUN - 1) {
                 *last_chunck += 1;
             } else {
-                self.chunks.push(192);
+                self.chunks.push(QOI_OP_RUN);
             }
         } else {
             self.is_run = true;
-            self.chunks.push(192);
+            self.chunks.push(QOI_OP_RUN);
         }
         true
     }
@@ -87,7 +88,7 @@ impl Encoder {
         if !diff_pixel.is_diff_range() {
             return false;
         }
-        let tag: u8 = 64;
+        let tag: u8 = QOI_OP_DIFF;
         diff_pixel.0 = (diff_pixel.0 as i8 + 2) as u8;
         diff_pixel.1 = (diff_pixel.1 as i8 + 2) as u8;
         diff_pixel.2 = (diff_pixel.2 as i8 + 2) as u8;
@@ -104,7 +105,7 @@ impl Encoder {
         if !diff_pixel.is_luma_range() {
             return false;
         }
-        let tag: u8 = 128;
+        let tag: u8 = QOI_OP_LUMA;
         let dg = ((diff_pixel.1 as i8) + 32) as u8;
         let dr_dg = ((diff_pixel.0 as i8 - diff_pixel.1 as i8) + 8) as u8;
         let db_dg = ((diff_pixel.2 as i8 - diff_pixel.1 as i8) + 8) as u8;
@@ -115,7 +116,7 @@ impl Encoder {
         true
     }
     fn qoi_op_rgb(&mut self, current_pixel: Pixel) -> bool {
-        let tag: u8 = 254;
+        let tag: u8 = QOI_OP_RGB;
         self.chunks.push(tag);
         self.chunks.push(current_pixel.0);
         self.chunks.push(current_pixel.1);
@@ -123,7 +124,7 @@ impl Encoder {
         true
     }
     fn qoi_op_rgba(&mut self, current_pixel: Pixel) -> bool {
-        let tag: u8 = 255;
+        let tag: u8 = QOI_OP_RGBA;
         self.chunks.push(tag);
         self.chunks.push(current_pixel.0);
         self.chunks.push(current_pixel.1);
@@ -137,7 +138,7 @@ impl Encoder {
             + (current_pixel.1) as u32 * 5
             + (current_pixel.2) as u32 * 7
             + (current_pixel.3) as u32 * 11)
-            % 64) as u8
+            % QOI_INDEX_SIZE as u32) as u8
     }
     pub fn encode(&mut self, current_pixel: Pixel) {
         if self.qoi_op_run(current_pixel) {
