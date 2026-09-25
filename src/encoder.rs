@@ -162,10 +162,12 @@ impl Encoder {
     }
     pub fn update_prev(&mut self, current_pixel: Pixel) {
         self.prev_pixel = current_pixel;
-        let index: usize = Self::get_index(&current_pixel).into();
-        self.prev_seen_list[index] = current_pixel;
+        if !self.is_run {
+            let index: usize = Self::get_index(&current_pixel).into();
+            self.prev_seen_list[index] = current_pixel;
+        }
     }
-    pub fn get_chunks(self) -> Vec<u8>{
+    pub fn get_chunks(self) -> Vec<u8> {
         self.chunks
     }
 }
