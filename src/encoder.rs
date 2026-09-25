@@ -79,7 +79,6 @@ impl Encoder {
             self.chunks.push(index as u8);
             return true;
         } else {
-            self.prev_seen_list[index] = current_pixel;
             return false;
         }
     }
@@ -163,6 +162,8 @@ impl Encoder {
     }
     pub fn update_prev(&mut self, current_pixel: Pixel) {
         self.prev_pixel = current_pixel;
+        let index: usize = Self::get_index(&current_pixel).into();
+        self.prev_seen_list[index] = current_pixel;
     }
     pub fn get_chunks(self) -> Vec<u8>{
         self.chunks
