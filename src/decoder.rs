@@ -183,30 +183,6 @@ impl Decoder {
                 continue;
             }
         }
-        println!(
-            "current chunk index {} , length : {} ",
-            self.current_chunk_index,
-            self.chunks.len()
-        );
         (self.image, self.img_width, self.img_height, self.channels)
     }
 }
-
-/*
-let header = outfile.first_chunk::<14>().unwrap();
-    let magic_format = &header[0..4];
-    let img_width: [u8; 4] = header[4..8].try_into().unwrap();
-    let img_height:[u8;4] = header[8..12].try_into().unwrap();
-    let img_is_rgb = &header[12];
-    let img_color_space = &header[13];
-    for i in magic_format {
-        print!("{}", *i as char);
-    }
-    println!(" ");
-    let w: u32 = u32::from_be_bytes(img_width);
-    println!("w : {w} ");
-    let h: u32 = u32::from_be_bytes(img_height);
-    println!("h : {h} ");
-    println!("{}", img_is_rgb);
-    println!("{}", img_color_space);
-*/

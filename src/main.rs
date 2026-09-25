@@ -2,14 +2,13 @@ mod constants;
 mod decoder;
 mod encoder;
 mod pixel;
-use decoder::Decoder;
 use constants::QOI_EOF;
+use decoder::Decoder;
 use encoder::{Encoder, Pixel, QoiHeader};
 use image::{self, ColorType};
 use std::env;
-fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
-    let args: Vec<String> = env::args().collect();
-    let image_path = &args[1];
+fn encode(image_path: &str) {
+    let file_name = std::path::Path::new(image_path).with_extension("qoi");
     let dyn_img = match image::open(image_path) {
         Ok(img) => img,
         Err(e) => {
@@ -25,8 +24,6 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     let is_rgb = if color_type == 3 { true } else { false };
     let width = dyn_img.width();
     let height = dyn_img.height();
-    println!("width {width}");
-    println!("height {height}");
     let image = dyn_img.into_bytes();
 
     let header = QoiHeader::new(width, height, color_type).to_bytes();
@@ -41,25 +38,19 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     output.extend(header);
     output.extend(encoder.get_chunks());
     output.extend(QOI_EOF);
-    match std::fs::write("./output.qoi", output) {
-        Ok(_) => println!("Encoded successfully to ./output.qoi"),
+    match std::fs::write(&file_name, output) {
+        Ok(_) => println!("Encoded successfully to {}", file_name.display()),
         Err(e) => {
             eprintln!("Failed to write output file: {e}");
             std::process::exit(1);
         }
     }
-    //consider using starts with and ends with for qoif and the eof to make sure file is correct
-    let outfile: Vec<u8> = std::fs::read("./output.qoi")?;
-
-    let decoder = Decoder::new(outfile)?;
+}
+fn decode(outfile: &str) {
+    let file_name = std::path::Path::new(outfile).with_extension("png");
+    let file: Vec<u8> = std::fs::read(outfile).expect("Couldn't read the file");
+    let decoder = Decoder::new(file).expect("File format is wrong");
     let decompressed = decoder.decode();
-    println!(
-        "vector size : {} , w: {} , h: {} , w*h: {}",
-        decompressed.0.len(),
-        decompressed.1,
-        decompressed.2,
-        decompressed.1 * decompressed.2
-    );
     let image: image::DynamicImage = if decompressed.3 == 3 {
         image::DynamicImage::ImageRgb8(
             image::RgbImage::from_raw(decompressed.1, decompressed.2, decompressed.0)
@@ -73,7 +64,17 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     };
 
     image
-        .save("decoded_output.jpg")
+        .save(file_name)
         .expect("failed to save output image");
-    Ok(())
+}
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let subcommand = &args[1];
+    if subcommand == "encode" {
+        encode(&args[2])
+    } else if subcommand == "decode" {
+        decode(&args[2])
+    } else {
+        println!("unknown command , try again with encode or decode please !")
+    }
 }
