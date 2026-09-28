@@ -2,6 +2,15 @@
 
 ## Overview
 [Quite OK Image](https://qoiformat.org) format is a lossless image compression algorithm achieving a similar size to PNG, while offering 20x-50x faster encoding and 3x-4x faster decoding. Originally written in C, this is a Rust implementation built for practice purposes.
+### Demo
+  
+
+https://github.com/user-attachments/assets/2e1eedf8-837a-4c97-af38-37a82fdbef4c
+
+
+
+
+
 ## Usage
 
 ### Clone the repo
